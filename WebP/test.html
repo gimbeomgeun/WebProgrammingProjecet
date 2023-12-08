@@ -1,0 +1,126 @@
+<html>
+    <head>
+        <script type="importmap">
+            {
+            "imports": {
+                "three": "https://unpkg.com/three@0.141.0/build/three.module.js",
+                "GLTFLoader" : "https://unpkg.com/three@0.141.0/examples/jsm/loaders/GLTFLoader.js"
+            }
+            }
+        </script>
+        
+    </head>
+    <body>
+    <script type="module">
+        import * as THREE from 'three';
+        import {GLTFLoader} from 'GLTFLoader';
+
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        const skyColor = new THREE.Color(0x87CEEB); // 하늘색
+        const oceanColor = new THREE.Color(0x1E90FF); // 바다색
+
+        scene.background = new THREE.Color().lerpColors(skyColor, oceanColor, 0.5); // 0.5는 그라디언트 비율을 나타냄
+        document.body.appendChild(renderer.domElement);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        directionalLight.position.set(0, 0, 1);
+        scene.add(directionalLight);
+
+
+        const loader = new GLTFLoader();
+        const modelPath = 'http://localhost:8000/Desktop/WebP/uparupa/uparupa1.gltf';
+
+        let model;
+        let isClick=false;
+        let exp=0;
+
+        loader.load(modelPath, (gltf) => {
+            model = gltf.scene;
+            scene.add(model);
+            model.position.set(0, 0, 0);
+            animate();
+        });
+
+        camera.position.z = 10;
+
+        const mouse = new THREE.Vector2();
+        let targetPosition = new THREE.Vector3();
+
+        window.addEventListener('click', onClick);
+
+        //화면을 클릭했을 때 우파루파가 이동할 좌표를 성정해주는 함수
+        function onClick(event) {
+            
+            // 마우스 클릭 지점의 좌표를 정규화(normalized)된 좌표로 변환
+            mouse.x = (event.clientX / window.innerWidth) * 30-15;
+            mouse.y = -(event.clientY / window.innerHeight) * 26+13;
+            
+            if(mouse.x>model.position.x)
+            {
+                model.rotation.y=90;
+            }
+            else{
+                model.rotation.y=-90;
+            }
+
+            exp+=1;
+            model.scale.set(1+0.01*exp,1+0.01*exp,1+0.01*exp);
+
+            targetPosition.copy(new THREE.Vector3(mouse.x,mouse.y,0));
+        }
+
+        //우파루파를 매 프레임 마다 이동시키는 함수
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // 현재 위치에서 목표 위치로 매 프레임마다 일정량씩 이동
+            if (model) {
+                model.position.lerp(targetPosition, 0.01);
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        
+        //키보드 누른 값에 따라 다른 이벤트 처리
+        function handleKeyPress(event) {
+            // 키보드 이벤트에서 키 코드 가져오기
+            const keyCode = event.keyCode;
+
+            // 키 코드에 따라 원하는 동작 수행
+            switch (keyCode) {
+                case 82:    //r눌렀을 때 크기 초기화
+                    exp=0;
+                    model.scale.set(1+0.01*exp,1+0.01*exp,1+0.01*exp);
+                    break;
+                case 37: // 왼쪽 화살표 키
+                    model.rotation.y=-90;
+                    break;
+                case 39: // 오른쪽 화살표 키
+                    model.rotation.y=90;
+                    break;
+                case 38: // 위쪽 화살표 키
+                    model.rotation.y=0;
+                    break;
+                case 40: // 아래쪽 화살표 키
+                    model.rotation.y=135;
+                    break;
+                default:
+                    // 다른 키에 대한 처리
+                    break;
+            }
+        }
+
+        // 이벤트 리스너 등록
+        document.addEventListener('keydown', handleKeyPress);
+        </script>
+
+    </body>
+
+</html>
